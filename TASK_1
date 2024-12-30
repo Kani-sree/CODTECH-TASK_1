@@ -1,0 +1,56 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+
+df = pd.read_csv("C:/Users/kanis/Downloads/breast-cancer dataset.csv")
+df['diagnosis'] = LabelEncoder().fit_transform(df['diagnosis'])
+
+# Dropping unnecessary columns
+X = df.drop(columns=['id', 'diagnosis'])
+y = df['diagnosis']
+
+# Scaling features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Feature importance using RandomForest
+model_rf = RandomForestClassifier(random_state=42)
+model_rf.fit(X_scaled, y)
+importances = model_rf.feature_importances_
+indices = importances.argsort()[::-1]  # Sort features by importance
+
+# Correlation Heatmap
+plt.figure(figsize=(12, 8))
+sns.heatmap(df.iloc[:, 2:].corr(), cmap='coolwarm', annot=False, linewidths=0.5)
+plt.title('Correlation Matrix Heatmap')
+plt.show()
+
+# Pair plot for the top 5 important features
+df_important = pd.DataFrame(X_scaled[:, indices[:5]], columns=X.columns[indices[:5]])
+df_important['diagnosis'] = y
+sns.pairplot(df_important, hue='diagnosis', palette='coolwarm')
+plt.title('Pair Plot of Top Features')
+plt.show()
+
+# Scatter plot for the top 2 important features
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=df_important.iloc[:, 0], y=df_important.iloc[:, 1], hue=df_important['diagnosis'], palette='coolwarm', s=50)
+plt.title('Scatter Plot of Top 2 Features')
+plt.xlabel(df_important.columns[0])
+plt.ylabel(df_important.columns[1])
+plt.legend(title='Diagnosis')
+plt.show()
+
+# Histogram for the top 10 important features
+important_features = X.columns[indices[:10]]
+plt.figure(figsize=(15, 10))
+for i, feature in enumerate(important_features):
+    plt.subplot(2, 5, i + 1)
+    sns.histplot(df, x=feature, hue='diagnosis', kde=True, element='step', palette='coolwarm')
+    plt.title(f'Distribution of {feature}')
+plt.tight_layout()
+plt.show()
+
+
